@@ -3,7 +3,13 @@ var arregloPosiciones = [];
 minutos = 2;
 segundos = 0;
 relog = "";
-
+posImagenInicial = null;
+posImagenCambio = null;
+posInicial = null;
+posFinal = null;
+continuaDraggable = 0;
+direccionAnterior = "";
+direccionActual = "";
 function modificarColorTitulo(){
   setTimeout(function(){
     $("#titulo").removeClass("main-titulo").addClass("main-titulo2");
@@ -37,19 +43,154 @@ function llenarTablaInicial(){
    $( ".imgCandy" ).draggable(
      {
        containment: "parent",
+       grid: [ 50, 50 ],
        start: function() {
-         var zInd = $(this).css("z-index") + 5;
-         console.log("index="+zInd);
+         var zInd = $(this).css("z-index") + 50;
          $(this).css("z-index",zInd);
+         posInicial = $(this).offset();
+         posImagenInicial = $(this).offset();
        },
        drag: function() {
-
+         if(continuaDraggable < 2){
+           cambiarImagenesPosicion(this);
+         }else{
+           console.log("se metioooooooooooooo");
+         }
        },
        stop: function() {
         $("#movimientos-text").text(parseInt($("#movimientos-text").text())+1);
         $(this).css("z-index",10);
+        $( this ).draggable( "enable" );
+        if(continuaDraggable == 1){
+            volverPosicionOriginal(this,posImagenInicial.left,posImagenInicial.top);
+        }
+
+        posImagenInicial = null;
+        posImagenCambio = null;
+        posInicial = null;
+        posFinal = null;
+        continuaDraggable = 0;
+        direccionAnterior = "";
+        direccionActual = "";
+        $(this).draggable("option","axis","");
+
       }
+
      });
+}
+
+function cambiarImagenesPosicion(imagen){
+  posFinal = $(imagen).offset();
+  dif = 0;
+  if(posInicial.left != posFinal.left){
+    direccionAnterior = direccionActual;
+    $(imagen).draggable("option","axis","x");
+    if(direccionActual == direccionAnterior){
+      console.log("direcciones iguales");
+      continuaDraggable++;
+    }else{
+      continuaDraggable--;
+    }
+
+    dif = posFinal.left - posInicial.left;
+
+    if(dif > 0){
+      direccionActual = "derecha";
+      if(continuaDraggable == 2){
+        var x = parseInt(imagen.id[0]);
+        y = parseInt(imagen.id[2]);
+
+        idOtraImagen = "#"+x+"-"+(y+1);
+        imagenOtra = $(idOtraImagen);
+
+        posImagenCambio = $(imagenOtra).offset();
+
+        imagenActual = arregloPosiciones[x][y];
+        arregloPosiciones[x][y] =  arregloPosiciones[x][y+1];
+        arregloPosiciones[x][y+1] = imagenActual;
+
+        pasarImagen(imagenOtra,posImagenInicial.left,1)
+
+        $(imagenOtra).attr("id",""+x+"-"+y);
+        $(imagen).attr("id",""+x+"-"+(y+1));
+      }
+    }else{
+      direccionActual = "izquierda";
+      if(continuaDraggable == 2){
+        var x = parseInt(imagen.id[0]);
+        y = parseInt(imagen.id[2]);
+
+        idOtraImagen = "#"+x+"-"+(y-1);
+        imagenOtra = $(idOtraImagen);
+
+        posImagenCambio = $(imagenOtra).offset();
+
+        imagenActual = arregloPosiciones[x][y];
+        arregloPosiciones[x][y] =  arregloPosiciones[x][y-1];
+        arregloPosiciones[x][y+1] = imagenActual;
+
+        pasarImagen(imagenOtra,posImagenInicial.left,2)
+
+        $(imagenOtra).attr("id",""+x+"-"+y);
+        $(imagen).attr("id",""+x+"-"+(y-1));
+      }
+    }
+    posInicial = posFinal;
+  }else if(posInicial.top != posFinal.top){
+    direccionAnterior = direccionActual;
+    $(imagen).draggable("option","axis","y");
+    if(direccionActual == direccionAnterior){
+      continuaDraggable++;
+    }else{
+      continuaDraggable--;
+    }
+
+    dif = posFinal.top - posInicial.top;
+
+    if(dif > 0){
+      direccionActual = "abajo";
+      if(continuaDraggable == 2){
+        var x = parseInt(imagen.id[0]);
+        y = parseInt(imagen.id[2]);
+
+        idOtraImagen = "#"+(x+1)+"-"+y;
+        imagenOtra = $(idOtraImagen);
+
+        posImagenCambio = $(imagenOtra).offset();
+
+        imagenActual = arregloPosiciones[x][y];
+        arregloPosiciones[x][y] =  arregloPosiciones[x+1][y];
+        arregloPosiciones[x+1][y] = imagenActual;
+
+        pasarImagen(imagenOtra,posImagenInicial.top,3)
+
+        $(imagenOtra).attr("id",""+x+"-"+y);
+        $(imagen).attr("id",""+(x+1)+"-"+y);
+      }
+    }else{
+      direccionActual = "arriba";
+      if(continuaDraggable == 2){
+        var x = parseInt(imagen.id[0]);
+        y = parseInt(imagen.id[2]);
+
+        idOtraImagen = "#"+(x-1)+"-"+y;
+        imagenOtra = $(idOtraImagen);
+
+        posImagenCambio = $(imagenOtra).offset();
+
+        imagenActual = arregloPosiciones[x][y];
+        arregloPosiciones[x][y] =  arregloPosiciones[x-1][y];
+        arregloPosiciones[x-1][y] = imagenActual;
+
+        pasarImagen(imagenOtra,posImagenInicial.top,4)
+
+        $(imagenOtra).attr("id",""+x+"-"+y);
+        $(imagen).attr("id",""+(x-1)+"-"+y);
+      }
+    }
+    posInicial = posFinal;
+  }
+  $( imagen ).draggable( "option", "grid" );
 }
 
 function validarContinuacion(posX,posY){
@@ -108,6 +249,42 @@ function inicializarArregloPosiciones(){
     }
   }
 }
+
+function pasarImagen(imagen,posicion,opcion){
+
+  switch (opcion) {
+    case 1:
+      setTimeout(function(){$(imagen).offset({left:(posicion+100)})},100);
+      setTimeout(function(){$(imagen).offset({left:(posicion+50)})},300);
+      setTimeout(function(){$(imagen).offset({left:(posicion)})},500);
+      break;
+    case 2:
+      setTimeout(function(){$(imagen).offset({left:(posicion-100)})},100);
+      setTimeout(function(){$(imagen).offset({left:(posicion-50)})},300);
+      setTimeout(function(){$(imagen).offset({left:(posicion)})},500);
+      break;
+    case 3:
+      console.log("imagen baja???");
+      var topImg = imagen.offset().top;
+      setTimeout(function(){$(imagen).offset({top:(topImg-30)})},100);
+      setTimeout(function(){$(imagen).offset({top:(topImg-70)})},300);
+      setTimeout(function(){$(imagen).offset({top:(posicion)})},500);
+      break;
+    case 4:
+      console.log("imagen sube???");
+      var topImg = imagen.offset().top;
+      setTimeout(function(){$(imagen).offset({top:(topImg+30)})},100);
+      setTimeout(function(){$(imagen).offset({top:(topImg+70)})},300);
+      setTimeout(function(){$(imagen).offset({top:(posicion)})},500);
+      break;
+    default:
+  }
+}
+
+function volverPosicionOriginal(imagen,posicionX,posicionY){
+  $(imagen).offset({left:posicionX,top:posicionY});
+}
+
 
 $(document).ready(function(){
   setInterval(modificarColorTitulo, 1000);
