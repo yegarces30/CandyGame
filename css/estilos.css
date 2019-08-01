@@ -116,3 +116,7 @@ div[class^='col']{
   width: 12.1%;
   z-index: 10;
 }
+
+.enLinea{
+  z-index: 10;
+}
