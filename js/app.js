@@ -12,7 +12,9 @@ direccionAnterior = "";
 direccionActual = "";
 valorPuntuacion = 5;
 
-
+/*
+Funcion modificarColorTitulo permite realiar la animación del título del juego
+*/
 function modificarColorTitulo(){
   setTimeout(function(){
     $("#titulo").removeClass("main-titulo").addClass("main-titulo2");
@@ -22,6 +24,11 @@ function modificarColorTitulo(){
   },500);
 }
 
+/*
+Funcion llenarTablaInicial permite limpiar el tableto e inicializar las variables para, posteriormente,
+llenar el tablero para un nuevo juego.
+También contiene el llamado a la función draggable de Jquery para poder que las imágenes se arrastren
+*/
 function llenarTablaInicial(){
   $(".panel-tablero").html("");
   minutos = 2;
@@ -105,12 +112,15 @@ function llenarTablaInicial(){
         direccionActual = "";
         $(this).draggable("option","grid",[50,50]);
 
-
       }
 
      });
 }
 
+/*
+Funcion cambiarImagenesPosicion permite cambiar  una imagen de posición dependiendo
+de la dirección en la que el usuario final arrastre el mouse
+*/
 function cambiarImagenesPosicion(imagen){
   posFinal = $(imagen).offset();
   dif = 0;
@@ -224,6 +234,10 @@ function cambiarImagenesPosicion(imagen){
   //$( imagen ).draggable( "option", "grid" );
 }
 
+/*
+Funcion validarContinuacion permite identificar si es posible continuar con el Juego
+teniendo en cuenta el movimiento del jugador
+*/
 function validarContinuacion(posX,posY){
   var valorActual = arregloPosiciones[posX][posY];
 
@@ -244,6 +258,9 @@ function validarContinuacion(posX,posY){
   return false;
 }
 
+/*
+Funcion noPermitirMovimiento vuelve la imagen a la posición inicial si no permite moverla
+*/
 function noPermitirMovimiento(imagen){
   switch (direccionActual) {
     case "derecha":
@@ -260,6 +277,10 @@ function noPermitirMovimiento(imagen){
 
 }
 
+/*
+Funcion calcularTiempo permite llevar la cuenta regresiva del tiempo y, al terminar el tiempo,
+muestra la animación de juego terminado.
+*/
 function calcularTiempo(){
   var cadenaSegundos = "";
   if(segundos == 0){
@@ -285,10 +306,16 @@ function calcularTiempo(){
   $("#timer").html("0"+minutos+":"+cadenaSegundos);
 }
 
+/*
+Funcion random permite obtener una imagen aleatoria
+*/
 function random(){
   return Math.floor((Math.random() * 4) + 1)+".png";
 }
 
+/*
+Funcion inicializarArregloPosiciones permite crear la matriz de imágenes para jugar
+*/
 function inicializarArregloPosiciones(){
   arregloPosiciones = new Array(8);
   for (var i = 0; i < arregloPosiciones.length; i++) {
@@ -301,6 +328,9 @@ function inicializarArregloPosiciones(){
   }
 }
 
+/*
+Funcion pasarImagen genera la animación de movimiento para las imágenes que cambian de posición
+*/
 function pasarImagen(imagen,posicion,opcion){
 
   switch (opcion) {
@@ -330,20 +360,23 @@ function pasarImagen(imagen,posicion,opcion){
   }
 }
 
+/*
+Funcion volverPosicionOriginal devuelve la imagen a la posición inicial en caso de que la jugada sea invalida
+*/
 function volverPosicionOriginal(imagen,posicionX,posicionY){
   $(imagen).offset({left:posicionX,top:posicionY});
 }
 
+/*
+Funcion validarEnLineaHorizontal permite identificar si hay tres o mas imágenes iguales en las filas
+*/
 function validarEnLineaHorizontal(fila){
-  console.log("validando fila: "+fila);
-  contador = 0
-  id = ""
+  var contador = 0
+  var id = ""
   for (var i = 0; i < 8; i++) {
-    console.log("imagen:"+i);
     for (var j = i; j < 8; j++) {
       if(arregloPosiciones[fila][i] == arregloPosiciones[fila][j]){
         contador++;
-        console.log("contando:"+contador);
         id += "#"+fila+"-"+j+", ";
       }else{
         break;
@@ -361,8 +394,10 @@ function validarEnLineaHorizontal(fila){
   }
 }
 
+/*
+Funcion validarEnLineaVertical permite identifica si hay tres o mas imágenes iguales en las columnas
+*/
 function validarEnLineaVertical(columna){
-  console.log("validando columna: "+columna);
   contador = 0
   id = ""
   for (var i = 0; i < 8; i++) {
@@ -386,25 +421,75 @@ function validarEnLineaVertical(columna){
   }
 }
 
+/*
+Funcion animacionEliminar permite hacer parpadear las imágenes que se encuentran en línea
+*/
 function animacionEliminar(){
   tiempo = 0;
   for (var i = 0; i < 5; i++) {
     setTimeout(function(){
       $(".enLinea").css("visibility","hidden");
     },tiempo);
-    tiempo += 500;
+    tiempo += 300;
     setTimeout(function(){
       $(".enLinea").css("visibility","visible");
     },tiempo);
-    tiempo += 500;
+    tiempo += 300;
   }
   setTimeout(function(){
     $(".enLinea").css("visibility","hidden");
+    $(".imgCandy").removeClass("enLinea");
   },tiempo);
 
+  tiempo += 700;
+
+
+  setTimeout(function(){
+    var longitud = $(".imgCandy[style*='hidden']").length;
+    while(longitud > 0){
+      console.log("si hay ocultos");
+      for (var i = 7; i >=0 ; i--) {
+        corregirFila(i);
+      }
+      longitud = $(".imgCandy[style*='hidden']").length;
+    }
+
+
+    for (var i = 0; i < 8; i++) {
+      validarEnLineaHorizontal(i);
+      validarEnLineaVertical(i);
+    }
+    animacionEliminar();
+
+  },tiempo);
 }
 
+/*
+Funcion corregirFila permite reemplazar las imágenes que desaparecen
+*/
+function corregirFila(fila){
+  for (var col = 7; col >= 0 ; col--) {
+    if($("#"+fila+"-"+col).css("visibility") == "hidden"){
+      if(fila == 0){
+        src = random();
+        $("#"+fila+"-"+col).attr("src","image/"+src);
+        arregloPosiciones[fila][col] = src;
+        $("#"+fila+"-"+col).css("visibility","visible");
+      }else{
+        src = $("#"+(fila-1)+"-"+col).attr("src");
+        $("#"+fila+"-"+col).attr("src",""+src);
+        arregloPosiciones[fila][col] = src.replace("image/", "");
+        $("#"+fila+"-"+col).css("visibility",$("#"+(fila-1)+"-"+col).css("visibility"));
+        $("#"+(fila-1)+"-"+col).css("visibility","hidden");
+        arregloPosiciones[fila-1][col] = "";
+      }
+    }
+  }
+}
 
+/*
+Funcion iniciar establece los valores iniciales para jugar
+*/
 function iniciar(){
   clearInterval(relog);
   $("#timer").html("02:00")
@@ -418,6 +503,9 @@ function iniciar(){
   relog = setInterval(calcularTiempo,1000);
 }
 
+/*
+Funcion que se ejecuta al terminar de cargar la página
+*/
 $(document).ready(function(){
   setInterval(modificarColorTitulo, 1000);
   $(".btn-reinicio").click(iniciar);
